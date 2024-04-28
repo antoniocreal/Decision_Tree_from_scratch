@@ -1,20 +1,29 @@
 import numpy as np
 from Decision_Tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
 # Define the file path relative to the current directory
 file_path = "banknote_data/Dataset.txt"
 
 # Load the data from the text file
 data = np.loadtxt(file_path, delimiter=',')
-
+print(data.size)
 print(data)
 
-# # Example usage:
-# X = np.array([[2, 4], [4, 2], [1, 3], [3, 1]])
-# y = np.array([0, 1, 0, 1])
+Input_data = data[:,0:4]
+Output_data = data[:,4]
+print(Input_data)
+print(Output_data)
 
-# tree = DecisionTreeClassifier(max_depth=2)
-# tree.fit(X, y)
+X_train, X_test, y_train, y_test = train_test_split(Input_data, Output_data, test_size=0.2, random_state=42)
 
-# # Predictions for new instances
-# print(tree.predict(np.array([[1.5, 3.5], [3.5, 1.5]])))
+tree = DecisionTreeClassifier(max_depth=5)
+tree.fit(X_train, y_train)
+
+# Predictions for new instances
+y_pred = tree.predict(X_test)
+print('Predictions: ', y_pred)
+
+acc_score = accuracy_score(y_test, y_pred)
+print('Accuracy score: ', acc_score)
