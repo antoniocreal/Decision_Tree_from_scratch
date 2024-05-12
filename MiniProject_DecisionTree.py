@@ -8,17 +8,17 @@ file_path = "banknote_data/Dataset.txt"
 
 # Load the data from the text file
 data = np.loadtxt(file_path, delimiter=',')
-print(data.size)
-print(data)
+# print(data.size)
+# print(data)
 
 Input_data = data[:,0:4]
 Output_data = data[:,4]
 print(Input_data)
 print(Output_data)
 
-X_train, X_test, y_train, y_test = train_test_split(Input_data, Output_data, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(Input_data, Output_data, test_size=0.5, random_state=42)
 
-tree = DecisionTreeClassifier(max_depth=5)
+tree = DecisionTreeClassifier(max_depth=3)
 tree.fit(X_train, y_train)
 
 # Predictions for new instances

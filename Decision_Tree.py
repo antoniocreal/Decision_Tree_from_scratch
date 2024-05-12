@@ -13,36 +13,71 @@ class DecisionTreeClassifier:
         self.max_depth = max_depth
 
     def fit(self, X, y):
+        # print('fit function: ')
         self.n_classes = len(np.unique(y))
-        self.n_features = X.shape[1]
-        self.tree = self._grow_tree(X, y)
+        # print('self.n_classes: '+str(self.n_classes)) # All good. It identifies how many features there are 
+        self.n_features = X.shape[1] # All good
+        # print('self.n_features: '+str(self.n_features))
+        self.tree = self.build_tree(X, y) 
+        # print('self.tree: '+str(self.tree))
 
-    def _grow_tree(self, X, y, depth=0):
-        n_samples_per_class = [np.sum(y == i) for i in range(self.n_classes)]
-        predicted_class = np.argmax(n_samples_per_class)
-        node = Node(value=predicted_class)
+    def best_split(self, X, y):
 
-        if depth < self.max_depth:
-            best_gini = float('inf')
-            best_criteria = None
-            best_sets = None
+        for feature_index in range(self.n_features):
+                thresholds = np.unique(X[:, feature_index])# For each feature, it finds the unique values along that feature's column. These unique values represent potential split points (thresholds) for that feature.
+                # By considering all unique values within each feature, the algorithm evaluates various potential splits and selects the one that minimizes impurity (e.g., Gini impurity or entropy) the most.
 
-            for feature_index in range(self.n_features):
-                thresholds = np.unique(X[:, feature_index])
+                # print(f'thresholds: {thresholds}')
 
                 for threshold in thresholds:
+                    # It goes through every threshold, meaning that it goes through every unique value of each feature. and for each threshold, it calculates the gini_impurity
+                    # print(f'threshold: {threshold}')
                     left_indices = np.where(X[:, feature_index] <= threshold)[0]
                     right_indices = np.where(X[:, feature_index] > threshold)[0]
 
                     gini = self._gini_impurity(y[left_indices], y[right_indices])
                     if gini < best_gini:
+                        print(f'New gini best: {gini}')
                         best_gini = gini
                         best_criteria = (feature_index, threshold)
                         best_sets = (left_indices, right_indices)
+                        print(f'best_sets: {best_sets}')
 
-            if best_gini != 0:
-                left = self._grow_tree(X[best_sets[0]], y[best_sets[0]], depth + 1)
-                right = self._grow_tree(X[best_sets[1]], y[best_sets[1]], depth + 1)
+        return best_gini, best_criteria, best_sets
+
+
+    def build_tree(self, X, y, depth=0):
+        # print('build_tree: ')
+        n_samples_per_class = [np.sum(y == i) for i in range(self.n_classes)]
+        # print(f'n_samples_per_class: {n_samples_per_class}')
+        predicted_class = np.argmax(n_samples_per_class)
+        # print(f'predicted_class: {predicted_class}')
+        node = Node(value=predicted_class)
+
+        # print(f'X: {X}')
+        # print(f'depth: {depth}') # As the function calls itself, it is always adding up 1 after defining a new threshold
+        if depth < self.max_depth:
+            best_gini = float('inf')
+            best_criteria = None
+            best_sets = None
+
+            best_gini, best_criteria, best_sets = self.best_split(self, X, y)
+
+            if best_gini != 0: # If best_gini is not equal to 0, it indicates that the current node is not perfectly pure and further splitting is necessary to improve the model's predictive power.
+                # If the condition is met, the code recursively calls the build_tree method to construct the left and right child nodes of the current node
+                if best_sets[0].size != 0:
+                    left = self.build_tree(X[best_sets[0]], y[best_sets[0]], depth + 1)
+                else:
+                    left = None
+
+                if best_sets[1].size != 0:
+                    right = self.build_tree(X[best_sets[1]], y[best_sets[1]], depth + 1)
+                else:
+                    right = None
+
+                # After constructing the left and right child nodes, the code creates a new Node object (node) representing the current node in the decision tree.
+                # It assigns the feature index and threshold that resulted in the best split (best_criteria) to the current node.
+                print(f'best_criteria: {best_criteria}')
                 node = Node(feature_index=best_criteria[0], threshold=best_criteria[1], left=left, right=right)
 
         return node
@@ -58,6 +93,7 @@ class DecisionTreeClassifier:
             for class_val in range(self.n_classes):
                 p = [np.sum(group == class_val) / size for group in groups]
                 score += p[class_val] * p[class_val]
+
             gini += (1.0 - score) * (size / total_samples)
         return gini
 
